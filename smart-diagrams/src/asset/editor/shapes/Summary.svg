@@ -1,0 +1,5 @@
+<svg style="display: inline-block;" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="h-12 w-12   dark:bg-white dark:text-primary-500  ">
+<circle cx="24" cy="24" r="15.25" fill="none" stroke="currentColor" stroke-width="1.5"/>
+<line y1="-0.75" x2="30.4138" y2="-0.75" transform="matrix(0.690476 0.723356 -0.756013 0.654557 13 13)" stroke="currentColor" stroke-width="1.5"/>
+<line y1="-0.75" x2="30.4138" y2="-0.75" transform="matrix(-0.690476 0.723356 -0.756013 -0.654557 34 13)" stroke="currentColor" stroke-width="1.5"/>
+</svg>
