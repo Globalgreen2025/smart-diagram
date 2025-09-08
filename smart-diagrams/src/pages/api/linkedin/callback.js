@@ -168,7 +168,7 @@ export default async function handler(req, res) {
     res.setHeader('Set-Cookie', `token=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800`);
     
     console.log('Redirecting to dashboard with token');
-    return res.redirect('https://smart-diagram.vercel.app/dashboard');
+    return res.redirect('https://smart-diagram-three.vercel.app/dashboard');
     
   } catch (error) {
     console.error('Unexpected error in callback:', error);

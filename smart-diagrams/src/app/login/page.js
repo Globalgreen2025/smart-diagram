@@ -22,7 +22,7 @@ function Page() {
     //     window.location.href = authUrl;
     //   };
     const handleLogin = () => {
-        const redirectUri = 'https://smart-diagram.vercel.app/api/linkedin/callback';
+        const redirectUri = 'https://smart-diagram-three.vercel.app/api/linkedin/callback';
     
         const cleanRedirectUri = redirectUri.replace(/\/$/, '');
         
