@@ -51,47 +51,15 @@ const Dashboard = () => {
         setMenuOpen(!menuOpen);
     };
 
-
-       
     useEffect(() => {
-        const token = searchParams.get('token');
-        if (token) {
-            // Store token in sessionStorage
-            sessionStorage.setItem('token', token);
-            
-            // Remove token from URL
-            router.replace('/dashboard');
+        const token = sessionStorage.getItem('token');
+        console.log('🏠 Dashboard Debug - Token:', token);
+        
+        if (!token) {
+            console.log('No token in dashboard, redirecting to home');
+            router.push('/');
         }
-        
-        // Check if user is authenticated
-        const checkAuth = async () => {
-            const token = sessionStorage.getItem('token');
-            if (!token) {
-                router.push('/login');
-                return;
-            }
-            
-            // Verify token with backend
-            try {
-                const response = await fetch('https://smart-diagram.onrender.com/api/linkedin/get-user', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Not authenticated');
-                }
-                
-                // User is authenticated, proceed
-            } catch (error) {
-                router.push('/login');
-            }
-        };
-        
-        checkAuth();
-    }, [router, searchParams]);
-    
+    }, [router]);
 
   
     return (
