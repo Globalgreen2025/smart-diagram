@@ -6,20 +6,32 @@ import {Toaster} from "react-hot-toast";
 
 function Page() {
 
-    // Function to handle LinkedIn login redirect
+    
+    // const handleLogin = () => {
+    //     // Ensure this matches EXACTLY what's registered in LinkedIn app
+    //     const redirectUri = 'https://smart-diagram.vercel.app/api/linkedin/callback';
+    
+        
+    //     // Remove any trailing slashes and ensure proper encoding
+    //     const cleanRedirectUri = redirectUri.replace(/\/$/, '');
+        
+    //     console.log("Final Redirect URI:", cleanRedirectUri);
+        
+    //     const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${process.env.NEXT_PUBLIC_CLIENT_ID}&redirect_uri=${encodeURIComponent(cleanRedirectUri)}&scope=openid%20profile%20email`;
+        
+    //     window.location.href = authUrl;
+    //   };
     const handleLogin = () => {
-        const params = new URLSearchParams({
-            response_type: "code",
-            client_id: process.env.NEXT_PUBLIC_CLIENT_ID,
-            redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/linkedin/callback`,
-            scope: "openid email profile",
-        });
-
-        // Redirect to LinkedIn authorization URL
-        if (typeof window !== "undefined") {
-            window.location.href = `https://www.linkedin.com/oauth/v2/authorization?${params}`;
-        }
-    };
+        const redirectUri = 'https://smart-diagram-three.vercel.app/api/linkedin/callback';
+    
+        const cleanRedirectUri = redirectUri.replace(/\/$/, '');
+        
+        console.log("Final Redirect URI:", cleanRedirectUri);
+        
+        const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${process.env.NEXT_PUBLIC_CLIENT_ID}&redirect_uri=${encodeURIComponent(cleanRedirectUri)}&scope=openid%20profile%20email`;
+        
+        window.location.href = authUrl;
+      };
     return (<Box
         sx={{
             display: "flex",
