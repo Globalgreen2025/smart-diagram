@@ -51,32 +51,7 @@ const Dashboard = () => {
         setMenuOpen(!menuOpen);
     };
 
- 
-    useEffect(() => {
-        const checkAuth = async () => {
-          try {
-            const token = sessionStorage.getItem('token');
-            console.log('Token from sessionStorage:', token);
-            
-            if (!token) {
-              throw new Error('No token found');
-            }
-    
-            const response = await axiosInstance.get('/api/linkedin/get-user');
-            console.log('User data:', response.data);
-            setUser(response.data.user);
-          } catch (error) {
-            console.error('Authentication error:', error);
-            sessionStorage.removeItem('token');
-            sessionStorage.removeItem('user');
-            router.push('/');
-          } finally {
-            setLoading(false);
-          }
-        };
-    
-        checkAuth();
-      }, [router]);
+
     
     
 
