@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     }
 
     // Forward to your Express backend
-    const backendUrl = `https://smart-diagrams-be.onrender.com/api/linkedin/callback?code=${code}`;
+    const backendUrl = `https://smart-diagram.onrender.com/api/linkedin/callback?code=${code}`;
     console.log('Forwarding to backend URL:', backendUrl);
 
     const backendResponse = await fetch(backendUrl, {
@@ -37,7 +37,7 @@ export default async function handler(req, res) {
 
     // Store token and redirect
     res.setHeader('Set-Cookie', `token=${token}; Path=/; HttpOnly; SameSite=Lax`);
-    const url = "https://smart-diagram.vercel.app"
+    const url = "https://smart-diagram-three.vercel.app"
     
     // Redirect to frontend with token
     return res.redirect(`${url}${redirectTo}?token=${token}`);
