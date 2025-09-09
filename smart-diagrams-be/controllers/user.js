@@ -52,11 +52,18 @@ const getUserData = async (accessToken) => {
 // LinkedIn OAuth callback function
 const linkedInCallback = async (req, res) => {
     try {
-        const { code } = req.query; // Extract authorization code from query parameters
-        const accessToken = await getAccessToken(code); // Get access token using the code
+        const { code } = req.query;
+        
+        if (!code) {
+            return res.status(400).json({
+                success: false,
+                error: "No authorization code provided",
+            });
+        }
 
-        // Fetch user data from LinkedIn
+        const accessToken = await getAccessToken(code);
         const userData = await getUserData(accessToken.access_token);
+        
         if (!userData) {
             return res.status(500).json({
                 success: false,
@@ -64,33 +71,47 @@ const linkedInCallback = async (req, res) => {
             });
         }
 
-        // Check if the user already exists in the database
         let user = await User.findOne({ email: userData.email });
-
-        // If user does not exist, create a new user
+        
         if (!user) {
             user = new User({
                 name: userData.name,
                 email: userData.email,
-                avatar: userData?.picture, // Optional chaining to prevent errors if picture is undefined
+                avatar: userData?.picture,
             });
-            await user.save(); // Save the new user to the database
+            await user.save();
         }
 
-        // Generate a JWT token for the authenticated user
-        const token = generateToken({ name: user.name, email: user.email, avatar: user.avatar });
-
-        // Set the token as an HTTP-only cookie
-        res.cookie("token", token, {
-            httpOnly: false, // Should ideally be true for better security
-            secure: true, // Ensure secure transmission over HTTPS
-            sameSite: "None", // Allow cross-site requests
+        const token = generateToken({ 
+            id: user._id,
+            name: user.name, 
+            email: user.email, 
+            avatar: user.avatar 
         });
 
-        // Redirect the user to the frontend dashboard with the token in the URL
-        res.redirect(`https://smart-diagram-three.vercel.app/dashboard?token=${token}`);
+        // Set HTTP-only cookie
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            domain: 'smart-diagram-three.vercel.app'
+        });
+
+        // Return JSON response (not redirect)
+        res.status(200).json({
+            success: true,
+            token, // Also return token for frontend to store in sessionStorage
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                avatar: user.avatar
+            }
+        });
+        
     } catch (error) {
-        // Handle any errors and send a response
+        console.error('Callback error:', error);
         res.status(500).json({
             success: false,
             error: error.message,
