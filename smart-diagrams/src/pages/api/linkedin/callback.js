@@ -1,4 +1,3 @@
-// pages/api/linkedin/callback.js
 export default async function handler(req, res) {
   console.log('LinkedIn callback initiated');
   
@@ -19,7 +18,10 @@ export default async function handler(req, res) {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include' // Important for cookies
     });
+
+    console.log('Backend response status:', backendResponse.status);
 
     if (!backendResponse.ok) {
       const errorText = await backendResponse.text();
@@ -28,15 +30,19 @@ export default async function handler(req, res) {
     }
 
     const responseData = await backendResponse.json();
-    const { token } = responseData;
+    const { token, user } = responseData;
     
-    console.log('Received token from backend');
+    console.log('Received response from backend:', responseData);
 
-    // Set both HTTP-only cookie AND store in sessionStorage for frontend access
-    res.setHeader('Set-Cookie', `token=${token}; Path=/; HttpOnly; SameSite=Lax; Secure`);
+    if (!token) {
+      throw new Error('No token received from backend');
+    }
+
+    // Store token in sessionStorage as fallback
+    // The HTTP-only cookie is already set by the backend response
     
-    // Redirect to dashboard with token in URL as fallback
-    return res.redirect(`https://smart-diagram-three.vercel.app/dashboard?token=${token}`);
+    // Redirect to dashboard
+    return res.redirect('https://smart-diagram-three.vercel.app/dashboard');
     
   } catch (error) {
     console.error('Full callback error:', error);
