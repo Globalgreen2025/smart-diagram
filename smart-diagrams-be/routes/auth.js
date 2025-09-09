@@ -3,7 +3,7 @@ const { linkedInCallback, getUser } = require("../controllers/user");
 
 const AuthRoutes = express.Router();
 
-AuthRoutes.get("/callback", linkedInCallback);
+AuthRoutes.post("/callback", linkedInCallback);
 
 AuthRoutes.get("/get-user", getUser);
 
