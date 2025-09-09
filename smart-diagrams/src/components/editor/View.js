@@ -1188,7 +1188,7 @@ useEffect(() => {
         <Controls 
            style={{
             position: 'absolute',
-            top: '50%',        // Center vertically
+            top: '80%',        // Center vertically
             left: '15px',      // 15px from left
             transform: 'translateY(-50%)', // Adjust for exact vertical centering
             zIndex: 1001, 
