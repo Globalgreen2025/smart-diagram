@@ -1188,7 +1188,7 @@ useEffect(() => {
         <Controls 
            style={{
             position: 'absolute',
-            top: '10px',
+            top: '5px',
             left: '10px', 
           }}
         />
