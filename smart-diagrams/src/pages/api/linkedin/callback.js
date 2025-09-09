@@ -1,50 +1,59 @@
 // pages/api/linkedin/callback.js
 export default async function handler(req, res) {
-  console.log('LinkedIn callback initiated');
+  console.log('=== LINKEDIN CALLBACK STARTED ===');
   
   try {
-    const { code } = req.query;
-    console.log('Received code from LinkedIn:', code);
-
-    if (!code) {
-      console.error('No authorization code received');
-      return res.redirect('/login?error=no_code');
+    const { code, error } = req.query;
+    
+    if (error) {
+      return res.redirect('/?error=auth_failed');
     }
 
-    // Forward to your Express backend
-    const backendUrl = `https://smart-diagram.onrender.com/api/linkedin/callback?code=${code}`;
-    console.log('Forwarding to backend URL:', backendUrl);
+    if (!code) {
+      return res.redirect('/?error=no_code');
+    }
 
+    // Call your backend
+    const backendUrl = `https://smart-diagram.onrender.com/api/linkedin/callback?code=${encodeURIComponent(code)}`;
     const backendResponse = await fetch(backendUrl, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Accept': 'application/json' },
     });
 
-    console.log('Backend response status:', backendResponse.status);
-
     if (!backendResponse.ok) {
-      const errorText = await backendResponse.text();
-      console.error('Backend error:', errorText);
-      throw new Error(`Backend responded with ${backendResponse.status}`);
+      return res.redirect('/?error=backend_error');
     }
 
     const responseData = await backendResponse.json();
-    const { token, redirectTo } = responseData;
+    const { token } = responseData;
     
-    console.log('Received token from backend');
+    if (!token) {
+      return res.redirect('/?error=no_token');
+    }
 
-    // Store token and redirect
-    res.setHeader('Set-Cookie', `token=${token}; Path=/; HttpOnly; SameSite=Lax`);
-    const url = "https://smart-diagram-three.vercel.app"
+    // Set HTTP-only cookie for automatic authentication
+    res.setHeader('Set-Cookie', 
+      `token=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Domain=.vercel.app`
+    );
     
-    // Redirect to frontend with token
-    return res.redirect(`${url}${redirectTo}?token=${token}`);
+    // Also store token in sessionStorage as fallback
+    const redirectHtml = `
+      <html>
+        <head>
+          <script>
+            sessionStorage.setItem('token', '${token}');
+            window.location.href = 'https://smart-diagram-three.vercel.app/dashboard';
+          </script>
+        </head>
+        <body>Redirecting...</body>
+      </html>
+    `;
+    
+    res.setHeader('Content-Type', 'text/html');
+    return res.send(redirectHtml);
     
   } catch (error) {
-    console.error('Full callback error:', error);
-    return res.redirect('/login?error=auth_failed');
+    console.error('Callback error:', error);
+    return res.redirect('/?error=unexpected_error');
   }
 }
-
