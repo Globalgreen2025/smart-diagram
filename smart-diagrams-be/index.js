@@ -21,8 +21,8 @@ app.use(
     cors({
         origin: "https://smart-diagram-three.vercel.app",
         credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'Set-Cookie']
+        // methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        // allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'Set-Cookie']
     })
 );
 
