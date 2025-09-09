@@ -1187,8 +1187,8 @@ useEffect(() => {
         <Background />
         <Controls 
            style={{
-            position: 'absolute',
-            top: '5px',
+            position: 'relative',
+            top: '2px',
             left: '10px', 
           }}
         />
