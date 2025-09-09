@@ -95,6 +95,7 @@ const linkedInCallback = async (req, res) => {
             secure: true,
             sameSite: 'none',
             maxAge: 7 * 24 * 60 * 60 * 1000,
+            domain: 'smart-diagram-three.vercel.app'
         });
 
         // Return JSON response (not redirect)
@@ -108,7 +109,6 @@ const linkedInCallback = async (req, res) => {
                 avatar: user.avatar
             }
         });
-        res.redirect('https://smart-diagram-three.vercel.app/dashboard');
         
     } catch (error) {
         console.error('Callback error:', error);
