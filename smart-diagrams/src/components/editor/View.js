@@ -1,12 +1,7 @@
 "use client";
 import { useContext, useEffect, useRef, useState, useCallback } from "react";
 import { useDebounce } from "ahooks";
-import {
-  Box,
-  IconButton,
-  Tooltip,
-  Button
-} from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { parse, render } from "@/utils/mermaid";
 import ReactFlow, {
   Background,
@@ -24,10 +19,6 @@ import { ChartContext } from "@/app/layout";
 import dagre from "dagre";
 import theme from "@/components/theme/theme";
 import CustomShapeNode from "./CustomShapeNode";
-import ZoomInIcon from '@mui/icons-material/ZoomIn';
-import ZoomOutIcon from '@mui/icons-material/ZoomOut';
-import LockIcon from '@mui/icons-material/Lock';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
 
 // Helper function to escape regex special characters
 const escapeRegExp = (string) => {
@@ -113,9 +104,6 @@ const FlowView = ({ color, fontSizes }) => {
   const setValidateCodeState = useStore.use.setValidateCode();
   const setValidateConfigState = useStore.use.setValidateConfig();
 
-  const [zoomLevel, setZoomLevel] = useState(1);
-const [isDiagramLocked, setIsDiagramLocked] = useState(false);
-
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
@@ -130,32 +118,6 @@ const [isDiagramLocked, setIsDiagramLocked] = useState(false);
 
   const [deletedNodeIds, setDeletedNodeIds] = useState([]);
   const [deletedEdgeIds, setDeletedEdgeIds] = useState([]);
-
-  const handleZoomIn = useCallback(() => {
-    if (reactFlowInstance) {
-      reactFlowInstance.zoomIn();
-      setZoomLevel(prev => Math.min(prev + 0.1, 2)); // Max zoom 200%
-    }
-  }, [reactFlowInstance]);
-  
-  const handleZoomOut = useCallback(() => {
-    if (reactFlowInstance) {
-      reactFlowInstance.zoomOut();
-      setZoomLevel(prev => Math.max(prev - 0.1, 0.5)); // Min zoom 50%
-    }
-  }, [reactFlowInstance]);
-  
-  const handleZoomReset = useCallback(() => {
-    if (reactFlowInstance) {
-      reactFlowInstance.fitView();
-      setZoomLevel(1);
-    }
-  }, [reactFlowInstance]);
-  
-  const toggleDiagramLock = useCallback(() => {
-    setIsDiagramLocked(prev => !prev);
-  }, []);
-  
 
   useEffect(() => {
     codeRef.current = code;
@@ -1183,65 +1145,9 @@ useEffect(() => {
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-        position: 'relative',
       }}
     >
-          <Box
-      sx={{
-        position: 'absolute',
-        left: 20,
-        top: '50%',
-        transform: 'translateY(-50%)',
-        zIndex: 1000,
-        background: 'white',
-        padding: 1,
-        borderRadius: 2,
-        boxShadow: 2,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 1,
-      }}
-    >
-      <Tooltip title="Zoom In">
-        <IconButton 
-          onClick={handleZoomIn} 
-          disabled={zoomLevel >= 2}
-          size="small"
-        >
-          <ZoomInIcon />
-        </IconButton>
-      </Tooltip>
-      
-      <Tooltip title="Zoom Out">
-        <IconButton 
-          onClick={handleZoomOut} 
-          disabled={zoomLevel <= 0.5}
-          size="small"
-        >
-          <ZoomOutIcon />
-        </IconButton>
-      </Tooltip>
-      
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center',
-        fontSize: '12px',
-        fontWeight: 'bold',
-        color: zoomLevel === 1 ? 'green' : 'inherit'
-      }}>
-        {Math.round(zoomLevel * 100)}%
-      </Box>
-      
-      <Tooltip title={isDiagramLocked ? "Unlock Diagram" : "Lock Diagram"}>
-        <IconButton 
-          onClick={toggleDiagramLock} 
-          color={isDiagramLocked ? "primary" : "default"}
-          size="small"
-        >
-          {isDiagramLocked ? <LockIcon /> : <LockOpenIcon />}
-        </IconButton>
-      </Tooltip>
-    </Box>
+
 <Box
   sx={{
     position: 'absolute',
@@ -1261,7 +1167,7 @@ useEffect(() => {
     Add Circle
   </Button>
 </Box>
-      {/* <ReactFlow
+      <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -1276,36 +1182,17 @@ useEffect(() => {
         connectionLineType={ConnectionLineType.SmoothStep}
         fitView
         style={{ background: "transparent" }}
-        nodeOrigin={[0.5, 0.5]} // ← ADD THIS LINE
+        nodeOrigin={[0.5, 0.5]}
       >
         <Background />
-        <Controls />
-      </ReactFlow> */}
-      <ReactFlow
-  nodes={nodes}
-  edges={edges}
-  onNodesChange={isDiagramLocked ? undefined : onNodesChange}
-  onEdgesChange={isDiagramLocked ? undefined : onEdgesChange}
-  onConnect={isDiagramLocked ? undefined : onConnect}
-  onNodeDoubleClick={onNodeDoubleClick}
-  onNodeDragStop={isDiagramLocked ? undefined : onNodeDragStop}
-  onNodesDelete={isDiagramLocked ? undefined : onNodesDelete}
-  nodeTypes={nodeTypes}
-  onEdgesDelete={isDiagramLocked ? undefined : onEdgesDelete}
-  onInit={setReactFlowInstance}
-  connectionLineType={ConnectionLineType.SmoothStep}
-  fitView
-  style={{ background: "transparent" }}
-  nodeOrigin={[0.5, 0.5]}
-  zoomOnScroll={!isDiagramLocked}
-  zoomOnPinch={!isDiagramLocked}
-  panOnScroll={!isDiagramLocked}
-  panOnDrag={!isDiagramLocked}
-  selectNodesOnDrag={!isDiagramLocked}
->
-  <Background />
-  <Controls />
-</ReactFlow>
+        <Controls 
+           style={{
+            position: 'absolute',
+            top: '20px',
+            left: '10px', 
+          }}
+        />
+      </ReactFlow>
     </Box>
   );
 };
