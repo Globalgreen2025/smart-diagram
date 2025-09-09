@@ -162,55 +162,32 @@ const linkedInCallback = async (req, res) => {
     }
 };
 
-// const getUser = async (req, res) => {
-//     try {
-//       // Check both cookie and Authorization header
-//       let token = req.cookies.token || req.headers.authorization?.replace('Bearer ', '');
-      
-//       if (!token) {
-//         return res.status(401).json({
-//           success: false,
-//           message: "No token provided",
-//         });
-//       }
-  
-//       const user = jwt.verify(token, process.env.JWT_SECRET);
-//       res.status(200).json({
-//         success: true,
-//         user,
-//       });
-//     } catch (error) {
-//       res.status(401).json({
-//         success: false,
-//         message: "Invalid token",
-//       });
-//     }
-//   };
-// In controllers/user.js - ensure this works properly
 const getUser = async (req, res) => {
     try {
-        // Check both cookie and Authorization header
-        let token = req.cookies.token || req.headers.authorization?.replace('Bearer ', '');
-        
-        if (!token) {
-            return res.status(401).json({
-                success: false,
-                message: "No token provided",
-            });
-        }
-
-        const user = jwt.verify(token, process.env.JWT_SECRET);
-        res.status(200).json({
-            success: true,
-            user,
+      // Check both cookie and Authorization header
+      let token = req.cookies.token || req.headers.authorization?.replace('Bearer ', '');
+      
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+          message: "No token provided",
         });
+      }
+  
+      const user = jwt.verify(token, process.env.JWT_SECRET);
+      res.status(200).json({
+        success: true,
+        user,
+      });
     } catch (error) {
-        res.status(401).json({
-            success: false,
-            message: "Invalid token",
-        });
+      res.status(401).json({
+        success: false,
+        message: "Invalid token",
+      });
     }
-};
+  };
+// In controllers/user.js - ensure this works properly
+
 // Export the functions for use in other parts of the application
 module.exports = {
     linkedInCallback,
