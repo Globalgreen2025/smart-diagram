@@ -10,7 +10,7 @@ const getAccessToken = async (code) => {
         code: code,
         client_id: process.env.LINKEDIN_CLIENT_ID,
         client_secret: process.env.LINKEDIN_CLIENT_SECRET,
-        redirect_uri: "https://smart-diagram.onrender.com/api/linkedin/callback",
+        redirect_uri: "https://smart-diagram-three.vercel.app/api/linkedin/callback",
     });
 
     // Sending a POST request to LinkedIn OAuth endpoint
