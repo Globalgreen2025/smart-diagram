@@ -51,15 +51,7 @@ const Dashboard = () => {
         setMenuOpen(!menuOpen);
     };
 
-    useEffect(() => {
-        const token = sessionStorage.getItem('token');
-        console.log('🏠 Dashboard Debug - Token:', token);
-        
-        if (!token) {
-            console.log('No token in dashboard, redirecting to home');
-            router.push('/');
-        }
-    }, [router]);
+
 
   
     return (

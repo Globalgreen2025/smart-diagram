@@ -33,27 +33,17 @@ const AuthGuard = ({ children }) => {
     const searchParams = useSearchParams()
     const path = usePathname()
     const router = useRouter();
-    
-    // Get token from URL or storage
-    const urlToken = searchParams.get("token");
-    const storedToken = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
-    const token = urlToken || storedToken;
 
-    // ADD THE USEEFFECT HERE:
     useEffect(() => {
-        console.log('🔐 AuthGuard Debug:');
-        console.log('Path:', path);
-        console.log('Token:', token);
-        console.log('URL Token:', urlToken);
-        console.log('Stored Token:', storedToken);
-        console.log('Search params:', searchParams.toString());
-        console.log('-------------------');
+        // Get token from URL or storage
+        const urlToken = searchParams.get("token");
+        const storedToken = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
+        const token = urlToken || storedToken;
 
-        // If we have a token from URL params, store it
+        // Store token from URL if present
         if (urlToken) {
-            console.log('Storing token from URL...');
             sessionStorage.setItem("token", urlToken);
-            // Remove token from URL to clean it up
+            // Clean up URL by removing token parameter
             const newPath = path.split('?')[0]; // Remove query parameters
             router.replace(newPath);
             return;
@@ -73,7 +63,7 @@ const AuthGuard = ({ children }) => {
             return;
         }
 
-    }, [path, router, searchParams, token, urlToken, storedToken]); // Add all dependencies
+    }, [path, router, searchParams]);
 
     return <>{children}</>;
 };
