@@ -1188,11 +1188,9 @@ useEffect(() => {
         <Controls 
            style={{
             position: 'absolute',
-            top: '30px',  
-            left: '15px',  
-            bottom: 'auto',
-            right: 'auto',
-            zIndex: 1000,
+      top: '20px',
+      left: '15px',
+      zIndex: 1001,
           }}
         />
       </ReactFlow>

@@ -1054,7 +1054,7 @@ const RightContainer = () => {
           top: 80,
           left: 10,
           pointerEvents: "auto", // ← ADD THIS LINE
-          zIndex: 1000,
+          zIndex: 999,
         }}
       >
         <Box sx={{ display: "flex", justifyContent: "center" }}>
@@ -1443,7 +1443,7 @@ const RightContainer = () => {
           position: "absolute",
           top: 10,
           left: 10,
-
+          zIndex: 999,
           p: 1,
         }}
       >
