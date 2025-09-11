@@ -160,9 +160,6 @@ const FlowView = ({ color, fontSizes }) => {
       },
     },
   ];
-  const theme = addTheme.find((t) => t.name === color.theme);
-
-  // Create a function to parse Mermaid nodes more accurately
 
   /*** VALIDATE CODE AND CONFIG ***/
   const setValidateCodeAndConfig = async (code, config) => {
@@ -296,50 +293,50 @@ const FlowView = ({ color, fontSizes }) => {
 
   const convertMermaidToReactFlow = (code, prevNodes = []) => {
     if (!code) return { nodes: [], edges: [] };
-  
+
     let nodes = [];
     let edges = [];
     const nodePositions = new Map();
     const nodeShapes = new Map();
-  
+
     // Parse positions and shapes
     const configRegex = /(\w+)@\{([^}]+)\}/g;
     let configMatch;
     while ((configMatch = configRegex.exec(code)) !== null) {
       const [, id, configStr] = configMatch;
-      
+
       // Parse position
       const posMatch = configStr.match(/pos:\s*\[(\d+),\s*(\d+)\]/);
       if (posMatch) {
         const [, x, y] = posMatch;
         nodePositions.set(id, { x: parseInt(x), y: parseInt(y) });
       }
-      
+
       // Parse shape
       const shapeMatch = configStr.match(/shape:\s*([^,}]+)/);
       if (shapeMatch) {
         nodeShapes.set(id, shapeMatch[1].replace(/"/g, "").trim());
       }
     }
-  
+
     const prevPosMap = new Map(prevNodes.map((n) => [n.id, n.position]));
-  
+
     // Extract nodes with better pattern matching
     const nodePatterns = [
-      /(\w+)\[([^\]]+)\]/g,    // square brackets
-      /(\w+)\{([^}]+)\}/g,     // curly braces
-      /(\w+)\(([^)]+)\)/g      // parentheses
+      /(\w+)\[([^\]]+)\]/g, // square brackets
+      /(\w+)\{([^}]+)\}/g, // curly braces
+      /(\w+)\(([^)]+)\)/g, // parentheses
     ];
-  
-    nodePatterns.forEach(pattern => {
+
+    nodePatterns.forEach((pattern) => {
       let match;
       while ((match = pattern.exec(code)) !== null) {
         const [_, id, label] = match;
-        
+
         if (!nodes.find((n) => n.id === id)) {
           const shapeType = nodeShapes.get(id);
           const nodeType = shapeType ? "customShape" : "default";
-  
+
           const node = {
             id,
             type: nodeType,
@@ -347,11 +344,13 @@ const FlowView = ({ color, fontSizes }) => {
               label: label.trim(),
               shape: shapeType,
             },
-            position: nodePositions.get(id) || 
-                     prevPosMap.get(id) || 
-                     { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
+            position: nodePositions.get(id) ||
+              prevPosMap.get(id) || {
+                x: Math.random() * 400 + 100,
+                y: Math.random() * 300 + 100,
+              },
           };
-  
+
           if (!shapeType) {
             node.style = {
               background: "#fff",
@@ -360,12 +359,12 @@ const FlowView = ({ color, fontSizes }) => {
               padding: "10px",
             };
           }
-  
+
           nodes.push(node);
         }
       }
     });
-  
+
     // Extract edges with improved pattern matching for conditional syntax
     const edgePatterns = [
       // Handle conditional edges: J -->|Session exists| K
@@ -375,15 +374,15 @@ const FlowView = ({ color, fontSizes }) => {
       // Handle labeled edges: A -- label --> B
       /(\w+)\s*--\s*([^->]+)\s*-->\s*(\w+)/g,
       // Handle simple lines: A -- B
-      /(\w+)\s*--\s*(\w+)/g
+      /(\w+)\s*--\s*(\w+)/g,
     ];
-  
-    edgePatterns.forEach(pattern => {
+
+    edgePatterns.forEach((pattern) => {
       let match;
       while ((match = pattern.exec(code)) !== null) {
         let source, target, label;
-  
-        if (match.length === 4 && pattern.source.includes('|')) {
+
+        if (match.length === 4 && pattern.source.includes("|")) {
           // Conditional edge pattern: source -->|label| target
           [, source, label, target] = match;
         } else if (match.length === 3) {
@@ -394,11 +393,18 @@ const FlowView = ({ color, fontSizes }) => {
           // Labeled edge pattern: source -- label --> target
           [, source, label, target] = match;
         }
-  
-        if (source && target && nodes.find(n => n.id === source) && nodes.find(n => n.id === target)) {
-          const edgeId = `e${source}-${target}${label ? `-${label.replace(/\s+/g, '-')}` : ''}`;
-          
-          if (!edges.find(e => e.id === edgeId)) {
+
+        if (
+          source &&
+          target &&
+          nodes.find((n) => n.id === source) &&
+          nodes.find((n) => n.id === target)
+        ) {
+          const edgeId = `e${source}-${target}${
+            label ? `-${label.replace(/\s+/g, "-")}` : ""
+          }`;
+
+          if (!edges.find((e) => e.id === edgeId)) {
             edges.push({
               id: edgeId,
               source,
@@ -411,7 +417,7 @@ const FlowView = ({ color, fontSizes }) => {
         }
       }
     });
-  
+
     // Handle subgraphs: auto-generate edges for nodes without explicit arrows
     const subgraphRegex = /subgraph\s+\w+([\s\S]*?)end/g;
     const nodeRegex = /(\w+)(?:\[(.*?)\]|\{(.*?)\})/g;
@@ -424,11 +430,11 @@ const FlowView = ({ color, fontSizes }) => {
         const [_, id] = match;
         nodeIds.push(id);
       }
-  
+
       for (let i = 0; i < nodeIds.length - 1; i++) {
         const source = nodeIds[i];
         const target = nodeIds[i + 1];
-  
+
         // Only add if edge does not already exist
         if (!edges.find((e) => e.source === source && e.target === target)) {
           edges.push({
@@ -441,66 +447,65 @@ const FlowView = ({ color, fontSizes }) => {
         }
       }
     }
-  
+
     // Apply Dagre layout if no saved positions and no previous nodes
     if (![...nodePositions.keys()].length && !prevNodes.length) {
       nodes = applyLayout(nodes, edges, "TB"); // Top-to-Bottom layout
     }
-  
+
     // Filter out deleted nodes/edges
     nodes = nodes.filter((n) => !deletedNodeIds.includes(n.id));
     edges = edges.filter((e) => !deletedEdgeIds.includes(e.id));
-  
+
     return { nodes, edges };
   };
 
-
   // const convertMermaidToReactFlow = (code, prevNodes = []) => {
   //   if (!code) return { nodes: [], edges: [] };
-  
+
   //   let nodes = [];
   //   let edges = [];
   //   const nodePositions = new Map();
   //   const nodeShapes = new Map();
-  
+
   //   // Parse positions and shapes
   //   const configRegex = /(\w+)@\{([^}]+)\}/g;
   //   let configMatch;
   //   while ((configMatch = configRegex.exec(code)) !== null) {
   //     const [, id, configStr] = configMatch;
-      
+
   //     // Parse position
   //     const posMatch = configStr.match(/pos:\s*\[(\d+),\s*(\d+)\]/);
   //     if (posMatch) {
   //       const [, x, y] = posMatch;
   //       nodePositions.set(id, { x: parseInt(x), y: parseInt(y) });
   //     }
-      
+
   //     // Parse shape
   //     const shapeMatch = configStr.match(/shape:\s*([^,}]+)/);
   //     if (shapeMatch) {
   //       nodeShapes.set(id, shapeMatch[1].replace(/"/g, "").trim());
   //     }
   //   }
-  
+
   //   const prevPosMap = new Map(prevNodes.map((n) => [n.id, n.position]));
-  
+
   //   // Extract nodes with better pattern matching
   //   const nodePatterns = [
   //     /(\w+)\[([^\]]+)\]/g,    // square brackets
   //     /(\w+)\{([^}]+)\}/g,     // curly braces
   //     /(\w+)\(([^)]+)\)/g      // parentheses
   //   ];
-  
+
   //   nodePatterns.forEach(pattern => {
   //     let match;
   //     while ((match = pattern.exec(code)) !== null) {
   //       const [_, id, label] = match;
-        
+
   //       if (!nodes.find((n) => n.id === id)) {
   //         const shapeType = nodeShapes.get(id);
   //         const nodeType = shapeType ? "customShape" : "default";
-  
+
   //         const node = {
   //           id,
   //           type: nodeType,
@@ -508,11 +513,11 @@ const FlowView = ({ color, fontSizes }) => {
   //             label: label.trim(),
   //             shape: shapeType,
   //           },
-  //           position: nodePositions.get(id) || 
-  //                    prevPosMap.get(id) || 
+  //           position: nodePositions.get(id) ||
+  //                    prevPosMap.get(id) ||
   //                    { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
   //         };
-  
+
   //         if (!shapeType) {
   //           node.style = {
   //             background: "#fff",
@@ -521,29 +526,29 @@ const FlowView = ({ color, fontSizes }) => {
   //             padding: "10px",
   //           };
   //         }
-  
+
   //         nodes.push(node);
   //       }
   //     }
   //   });
-  
+
   //   // Extract edges with better pattern matching
   //   const edgePatterns = [
   //     /(\w+)\s*-->\s*(\w+)/g,                    // simple arrow
   //     /(\w+)\s*--\s*([^->]+)\s*-->\s*(\w+)/g,    // labeled arrow
   //     /(\w+)\s*--\s*(\w+)/g                      // simple line
   //   ];
-  
+
   //   edgePatterns.forEach(pattern => {
   //     let match;
   //     while ((match = pattern.exec(code)) !== null) {
   //       const source = match[1];
   //       const target = match[match.length - 1]; // Last capture group is always target
   //       const label = match.length === 4 ? match[2] : undefined;
-  
+
   //       if (nodes.find(n => n.id === source) && nodes.find(n => n.id === target)) {
   //         const edgeId = `e${source}-${target}${label ? `-${label}` : ''}`;
-          
+
   //         if (!edges.find(e => e.id === edgeId)) {
   //           edges.push({
   //             id: edgeId,
@@ -557,18 +562,15 @@ const FlowView = ({ color, fontSizes }) => {
   //       }
   //     }
   //   });
-  
+
   //   // Filter out deleted nodes/edges
   //   nodes = nodes.filter((n) => !deletedNodeIds.includes(n.id));
   //   edges = edges.filter((e) => !deletedEdgeIds.includes(e.id));
-  
+
   //   return { nodes, edges };
   // };
- 
- 
- 
+
   /*** RENDER MERMAID DIAGRAM AS REACTFLOW ***/
- 
 
   const renderDiagram = async (code, config) => {
     if (!code) return;
@@ -651,7 +653,6 @@ const FlowView = ({ color, fontSizes }) => {
         input.onkeydown = null;
         input.onblur = null;
 
-       
         setTimeout(() => {
           if (document.body.contains(input)) {
             document.body.removeChild(input);
@@ -676,44 +677,47 @@ const FlowView = ({ color, fontSizes }) => {
     [updateCode]
   );
 
-  const handleAddNode = useCallback((type = 'default', shape = null) => {
-    const newNodeId = `node_${Date.now()}`;
-    const newLabel = 'New Node';
-    
-    // Create node at random position
-    const newNode = {
-      id: newNodeId,
-      type: shape ? 'customShape' : 'default',
-      data: {
-        label: newLabel,
-        shape: shape,
-      },
-      position: {
-        x: Math.random() * 500 + 100,
-        y: Math.random() * 400 + 100
-      },
-      ...(!shape && {
-        style: {
-          background: "#fff",
-          border: "2px solid #333",
-          borderRadius: "5px",
-          padding: "10px",
-        }
-      })
-    };
-  
-    // Add to React Flow
-    setNodes((nds) => [...nds, newNode]);
-  
-    // Add to Mermaid code
-    const nodeCode = shape 
-      ? `${newNodeId}[${newLabel}]\n${newNodeId}@{shape:"${shape}"}`
-      : `${newNodeId}[${newLabel}]`;
-    
-    const newCode = code ? `${code}\n${nodeCode}` : nodeCode;
-    setCode(newCode);
-    sessionStorage.setItem("code", newCode);
-  }, [code, setCode, setNodes]);
+  const handleAddNode = useCallback(
+    (type = "default", shape = null) => {
+      const newNodeId = `node_${Date.now()}`;
+      const newLabel = "New Node";
+
+      // Create node at random position
+      const newNode = {
+        id: newNodeId,
+        type: shape ? "customShape" : "default",
+        data: {
+          label: newLabel,
+          shape: shape,
+        },
+        position: {
+          x: Math.random() * 500 + 100,
+          y: Math.random() * 400 + 100,
+        },
+        ...(!shape && {
+          style: {
+            background: "#fff",
+            border: "2px solid #333",
+            borderRadius: "5px",
+            padding: "10px",
+          },
+        }),
+      };
+
+      // Add to React Flow
+      setNodes((nds) => [...nds, newNode]);
+
+      // Add to Mermaid code
+      const nodeCode = shape
+        ? `${newNodeId}[${newLabel}]\n${newNodeId}@{shape:"${shape}"}`
+        : `${newNodeId}[${newLabel}]`;
+
+      const newCode = code ? `${code}\n${nodeCode}` : nodeCode;
+      setCode(newCode);
+      sessionStorage.setItem("code", newCode);
+    },
+    [code, setCode, setNodes]
+  );
 
   /*** HANDLE EDGE CONNECTIONS ***/
   // const onConnect = useCallback(
@@ -741,32 +745,35 @@ const FlowView = ({ color, fontSizes }) => {
   //   [code]
   // );
 
-  const onConnect = useCallback((params) => {
-    const edgeId = `e${params.source}-${params.target}`;
-    
-    // Check if edge already exists
-    if (edges.find(e => e.id === edgeId)) {
-      return;
-    }
-  
-    const newEdge = {
-      ...params,
-      id: edgeId,
-      type: "smoothstep",
-      markerEnd: { type: MarkerType.ArrowClosed },
-    };
-  
-    setEdges((eds) => addEdge(newEdge, eds));
-    setDeletedEdgeIds((prev) => prev.filter((id) => id !== edgeId));
-  
-    // Add to code only if it doesn't exist
-    const edgeCode = `${params.source} --> ${params.target}`;
-    if (!code.includes(edgeCode)) {
-      const newCode = code + `\n${edgeCode}`;
-      setCode(newCode);
-      sessionStorage.setItem("code", newCode);
-    }
-  }, [code, edges, setCode, setEdges]);
+  const onConnect = useCallback(
+    (params) => {
+      const edgeId = `e${params.source}-${params.target}`;
+
+      // Check if edge already exists
+      if (edges.find((e) => e.id === edgeId)) {
+        return;
+      }
+
+      const newEdge = {
+        ...params,
+        id: edgeId,
+        type: "smoothstep",
+        markerEnd: { type: MarkerType.ArrowClosed },
+      };
+
+      setEdges((eds) => addEdge(newEdge, eds));
+      setDeletedEdgeIds((prev) => prev.filter((id) => id !== edgeId));
+
+      // Add to code only if it doesn't exist
+      const edgeCode = `${params.source} --> ${params.target}`;
+      if (!code.includes(edgeCode)) {
+        const newCode = code + `\n${edgeCode}`;
+        setCode(newCode);
+        sessionStorage.setItem("code", newCode);
+      }
+    },
+    [code, edges, setCode, setEdges]
+  );
   /*** NODE DRAGGING ***/
   const onNodeDragStop = useCallback(
     (event, node) => {
@@ -797,143 +804,151 @@ const FlowView = ({ color, fontSizes }) => {
   );
 
   // Update the onNodesDelete function to be more comprehensive
-const onNodesDelete = useCallback(
-  (deletedNodes) => {
-    const deletedIds = deletedNodes.map((n) => n.id);
-    setDeletedNodeIds((prev) => [...prev, ...deletedIds]);
+  const onNodesDelete = useCallback(
+    (deletedNodes) => {
+      const deletedIds = deletedNodes.map((n) => n.id);
+      setDeletedNodeIds((prev) => [...prev, ...deletedIds]);
 
-    let newCode = code;
+      let newCode = code;
 
-    deletedIds.forEach((id) => {
-      // Remove node definitions (all formats)
-      const nodePatterns = [
-        // id[label]
-        new RegExp(`^\\s*${id}\\s*\\[[^\\]]+\\].*$`, 'gm'),
-        // id{label}
-        new RegExp(`^\\s*${id}\\s*\\{[^}]+\\}.*$`, 'gm'),
-        // id(label)
-        new RegExp(`^\\s*${id}\\s*\\([^)]+\\).*$`, 'gm'),
-        // Any node configuration
-        new RegExp(`^\\s*${id}@\\{[^}]+\\}.*$`, 'gm'),
-      ];
+      deletedIds.forEach((id) => {
+        // Remove node definitions (all formats)
+        const nodePatterns = [
+          // id[label]
+          new RegExp(`^\\s*${id}\\s*\\[[^\\]]+\\].*$`, "gm"),
+          // id{label}
+          new RegExp(`^\\s*${id}\\s*\\{[^}]+\\}.*$`, "gm"),
+          // id(label)
+          new RegExp(`^\\s*${id}\\s*\\([^)]+\\).*$`, "gm"),
+          // Any node configuration
+          new RegExp(`^\\s*${id}@\\{[^}]+\\}.*$`, "gm"),
+        ];
 
-      nodePatterns.forEach(pattern => {
-        newCode = newCode.replace(pattern, '');
+        nodePatterns.forEach((pattern) => {
+          newCode = newCode.replace(pattern, "");
+        });
+
+        // Remove edges connected to this node (both as source and target)
+        const edgePatterns = [
+          // source --> target
+          new RegExp(`^\\s*${id}\\s*--.*-->\\s*\\w+.*$`, "gm"),
+          new RegExp(`^\\s*\\w+\\s*--.*-->\\s*${id}.*$`, "gm"),
+          // source -- target
+          new RegExp(`^\\s*${id}\\s*--\\s*\\w+.*$`, "gm"),
+          new RegExp(`^\\s*\\w+\\s*--\\s*${id}.*$`, "gm"),
+          // conditional edges
+          new RegExp(`^\\s*${id}\\s*-->\s*\\|[^|]+\\|\\s*\\w+.*$`, "gm"),
+          new RegExp(`^\\s*\\w+\\s*-->\s*\\|[^|]+\\|\\s*${id}.*$`, "gm"),
+        ];
+
+        edgePatterns.forEach((pattern) => {
+          newCode = newCode.replace(pattern, "");
+        });
       });
 
-      // Remove edges connected to this node (both as source and target)
-      const edgePatterns = [
-        // source --> target
-        new RegExp(`^\\s*${id}\\s*--.*-->\\s*\\w+.*$`, 'gm'),
-        new RegExp(`^\\s*\\w+\\s*--.*-->\\s*${id}.*$`, 'gm'),
-        // source -- target
-        new RegExp(`^\\s*${id}\\s*--\\s*\\w+.*$`, 'gm'),
-        new RegExp(`^\\s*\\w+\\s*--\\s*${id}.*$`, 'gm'),
-        // conditional edges
-        new RegExp(`^\\s*${id}\\s*-->\s*\\|[^|]+\\|\\s*\\w+.*$`, 'gm'),
-        new RegExp(`^\\s*\\w+\\s*-->\s*\\|[^|]+\\|\\s*${id}.*$`, 'gm'),
-      ];
+      // Clean up empty lines and trim
+      newCode = newCode
+        .split("\n")
+        .filter((line) => line.trim() !== "")
+        .join("\n")
+        .trim();
 
-      edgePatterns.forEach(pattern => {
-        newCode = newCode.replace(pattern, '');
-      });
-    });
-
-    // Clean up empty lines and trim
-    newCode = newCode
-      .split('\n')
-      .filter(line => line.trim() !== '')
-      .join('\n')
-      .trim();
-
-    setCode(newCode);
-    sessionStorage.setItem('code', newCode);
-  },
-  [code, setCode]
-);
-
-// Update the onEdgesDelete function to handle all edge types
-const onEdgesDelete = useCallback(
-  (deletedEdges) => {
-    const deletedIds = deletedEdges.map((e) => e.id);
-    setDeletedEdgeIds((prev) => [...prev, ...deletedIds]);
-
-    let newCode = code;
-    
-    deletedEdges.forEach((edge) => {
-      const { source, target, label } = edge;
-      
-      // Create patterns for all possible edge formats
-      const edgePatterns = [
-        // source --> target (simple arrow)
-        `^\\s*${source}\\s*-->\\s*${target}.*$`,
-        // source -- label --> target (labeled arrow)
-        label ? `^\\s*${source}\\s*--\\s*${escapeRegExp(label)}\\s*-->\\s*${target}.*$` : null,
-        // source -- target (simple line)
-        `^\\s*${source}\\s*--\\s*${target}.*$`,
-        // source -->|label| target (conditional)
-        label ? `^\\s*${source}\\s*-->\\s*\\|${escapeRegExp(label)}\\|\\s*${target}.*$` : null,
-      ].filter(Boolean);
-
-      edgePatterns.forEach(pattern => {
-        const regex = new RegExp(pattern, 'gm');
-        newCode = newCode.replace(regex, '');
-      });
-    });
-
-    // Clean up empty lines
-    newCode = newCode
-      .split('\n')
-      .filter((line) => line.trim() !== '')
-      .join('\n')
-      .trim();
-
-    setCode(newCode);
-    sessionStorage.setItem('code', newCode);
-  },
-  [code, setCode]
-);
-
-// Also update the useEffect that cleans up deleted IDs
-useEffect(() => {
-  if (!validateCode) return;
-
-  // Clean up deleted node IDs that no longer exist
-  setDeletedNodeIds((prev) =>
-    prev.filter((id) => {
-      // Check if node exists in any form
-      const nodePatterns = [
-        new RegExp(`^\\s*${id}\\[`),
-        new RegExp(`^\\s*${id}\\{`),
-        new RegExp(`^\\s*${id}\\(`),
-        new RegExp(`^\\s*${id}@\\{`),
-      ];
-      
-      return !nodePatterns.some(pattern => pattern.test(validateCode));
-    })
+      setCode(newCode);
+      sessionStorage.setItem("code", newCode);
+    },
+    [code, setCode]
   );
 
-  // Clean up deleted edge IDs that no longer exist
-  setDeletedEdgeIds((prev) =>
-    prev.filter((id) => {
-      // Extract source and target from edge ID
-      const match = id.match(/^e(\w+)-(\w+)(?:-([^-]+))?$/);
-      if (!match) return false;
-      
-      const [, source, target] = match;
-      
-      // Check if edge exists in any form
-      const edgePatterns = [
-        new RegExp(`^\\s*${source}\\s*-->\\s*${target}`),
-        new RegExp(`^\\s*${source}\\s*--\\s*${target}`),
-        new RegExp(`^\\s*${target}\\s*-->\\s*${source}`),
-        new RegExp(`^\\s*${target}\\s*--\\s*${source}`),
-      ];
-      
-      return !edgePatterns.some(pattern => pattern.test(validateCode));
-    })
+  // Update the onEdgesDelete function to handle all edge types
+  const onEdgesDelete = useCallback(
+    (deletedEdges) => {
+      const deletedIds = deletedEdges.map((e) => e.id);
+      setDeletedEdgeIds((prev) => [...prev, ...deletedIds]);
+
+      let newCode = code;
+
+      deletedEdges.forEach((edge) => {
+        const { source, target, label } = edge;
+
+        // Create patterns for all possible edge formats
+        const edgePatterns = [
+          // source --> target (simple arrow)
+          `^\\s*${source}\\s*-->\\s*${target}.*$`,
+          // source -- label --> target (labeled arrow)
+          label
+            ? `^\\s*${source}\\s*--\\s*${escapeRegExp(
+                label
+              )}\\s*-->\\s*${target}.*$`
+            : null,
+          // source -- target (simple line)
+          `^\\s*${source}\\s*--\\s*${target}.*$`,
+          // source -->|label| target (conditional)
+          label
+            ? `^\\s*${source}\\s*-->\\s*\\|${escapeRegExp(
+                label
+              )}\\|\\s*${target}.*$`
+            : null,
+        ].filter(Boolean);
+
+        edgePatterns.forEach((pattern) => {
+          const regex = new RegExp(pattern, "gm");
+          newCode = newCode.replace(regex, "");
+        });
+      });
+
+      // Clean up empty lines
+      newCode = newCode
+        .split("\n")
+        .filter((line) => line.trim() !== "")
+        .join("\n")
+        .trim();
+
+      setCode(newCode);
+      sessionStorage.setItem("code", newCode);
+    },
+    [code, setCode]
   );
-}, [validateCode]);
+
+  // Also update the useEffect that cleans up deleted IDs
+  useEffect(() => {
+    if (!validateCode) return;
+
+    // Clean up deleted node IDs that no longer exist
+    setDeletedNodeIds((prev) =>
+      prev.filter((id) => {
+        // Check if node exists in any form
+        const nodePatterns = [
+          new RegExp(`^\\s*${id}\\[`),
+          new RegExp(`^\\s*${id}\\{`),
+          new RegExp(`^\\s*${id}\\(`),
+          new RegExp(`^\\s*${id}@\\{`),
+        ];
+
+        return !nodePatterns.some((pattern) => pattern.test(validateCode));
+      })
+    );
+
+    // Clean up deleted edge IDs that no longer exist
+    setDeletedEdgeIds((prev) =>
+      prev.filter((id) => {
+        // Extract source and target from edge ID
+        const match = id.match(/^e(\w+)-(\w+)(?:-([^-]+))?$/);
+        if (!match) return false;
+
+        const [, source, target] = match;
+
+        // Check if edge exists in any form
+        const edgePatterns = [
+          new RegExp(`^\\s*${source}\\s*-->\\s*${target}`),
+          new RegExp(`^\\s*${source}\\s*--\\s*${target}`),
+          new RegExp(`^\\s*${target}\\s*-->\\s*${source}`),
+          new RegExp(`^\\s*${target}\\s*--\\s*${source}`),
+        ];
+
+        return !edgePatterns.some((pattern) => pattern.test(validateCode));
+      })
+    );
+  }, [validateCode]);
 
   // const onNodesDelete = useCallback(
   //   (deletedNodes) => {
@@ -1147,26 +1162,34 @@ useEffect(() => {
         backgroundRepeat: "no-repeat",
       }}
     >
-
-<Box
-  sx={{
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    zIndex: 1000,
-    background: 'white',
-    padding: 1,
-    borderRadius: 1,
-    boxShadow: 2
-  }}
->
-  <Button onClick={() => handleAddNode('default')} variant="contained" size="small">
-    Add Node
-  </Button>
-  <Button onClick={() => handleAddNode('customShape', 'circle')} variant="outlined" size="small" sx={{ ml: 1 }}>
-    Add Circle
-  </Button>
-</Box>
+      <Box
+        sx={{
+          position: "absolute",
+          top: 20,
+          right: 20,
+          zIndex: 1000,
+          background: "white",
+          padding: 1,
+          borderRadius: 1,
+          boxShadow: 2,
+        }}
+      >
+        <Button
+          onClick={() => handleAddNode("default")}
+          variant="contained"
+          size="small"
+        >
+          Add Node
+        </Button>
+        <Button
+          onClick={() => handleAddNode("customShape", "circle")}
+          variant="outlined"
+          size="small"
+          sx={{ ml: 1 }}
+        >
+          Add Circle
+        </Button>
+      </Box>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -1185,13 +1208,13 @@ useEffect(() => {
         nodeOrigin={[0.5, 0.5]}
       >
         <Background />
-        <Controls 
-           style={{
-            position: 'absolute',
-            top: '80%',        // Center vertically
-            left: '10px',      // 15px from left
-            transform: 'translateY(-50%)', // Adjust for exact vertical centering
-            zIndex: 1001, 
+        <Controls
+          style={{
+            position: "absolute",
+            top: "80%", // Center vertically
+            left: "10px", // 15px from left
+            transform: "translateY(-50%)", // Adjust for exact vertical centering
+            zIndex: 1001,
           }}
         />
       </ReactFlow>
